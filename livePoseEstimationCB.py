@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import math
+import os
 
 from os import listdir, mkdir
 from os.path import isfile, join
@@ -20,6 +21,7 @@ Created on Sat Oct 12 10:17:15 2019
 """
 loadCalibMatrix = True
 camFileNameLoad = 'camMat01.npz'
+dataTXT = 'test1.txt'
 
 snap = 0
 maxSnap = 30
@@ -113,8 +115,7 @@ cv2.namedWindow('Pose Estimation',cv2.WINDOW_NORMAL)
 
 while(cap.isOpened()):
     ret, img = cap.read()
-    #img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-
+    #img = cv2.rotate(img,cv2.ROTATE_90_CLOCKWISE) 
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     cret, corners = cv2.findChessboardCorners(gray, patternSize, cv2.CALIB_CB_FAST_CHECK)
     if cret:
@@ -171,6 +172,16 @@ for i in range(pos.shape[0]):
 print("Rotation in degrees (Roll, Pitch, Yaw)\n", meanPyr)
 print("standard dev of Roll, Pitch, Yaw\n", stdPyr)
 print("standard dev of Translation(position) in meters\n", stdP.T)
+
+# gem til txt
+if os.path.isfile(dataTXT):
+    num = int(float(dataTXT[4:5])) 
+    num += 1
+    dataTXT = "test"+ str(num)+".txt"
+    print("new filename",dataTXT)
+np.savetxt(dataTXT,("stdPYR",stdPyr,"stdR",stdR.T,"stdP",stdP.T,"meanPYR",meanPyr,"numb. data points",pyr.shape[0],"Position",pos.T,"PitchYawRoll",pyr), fmt="%s")
+
+
 fig = plt.figure()
 
 ax = fig.add_subplot(1,2,1, projection='3d')
