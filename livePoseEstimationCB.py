@@ -113,6 +113,7 @@ cv2.namedWindow('Pose Estimation',cv2.WINDOW_NORMAL)
 
 while(cap.isOpened()):
     ret, img = cap.read()
+    #img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
 
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     cret, corners = cv2.findChessboardCorners(gray, patternSize, cv2.CALIB_CB_FAST_CHECK)
