@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import animation
 
+import datetime as dt
+import matplotlib.animation as animation
+
 
 
 #!/usr/bin/env python3
@@ -21,14 +24,14 @@ Created on Sat Oct 12 10:17:15 2019
 loadCalibMatrix = True
 #makeCal = not loadCalibMatrix
 #saveCamMat = False
-camFileNameLoad = 'camMat01.npz'
+camFileNameLoad = 'camMat03.npz'
 #camFileNameSave = 'camMat02'
 snap = 0
 maxSnap = 30
 
 pos = np.array([[], [], []], dtype=np.float64) # til at opsamle tvecs vektor
 rot = np.array([[], [], []], dtype=np.float64) # til at opsamle rvecs vektor
-pyr = np.array([[], [], []], dtype=np.float64)
+pyr = np.empty((0,3), dtype=np.float64)
 #print(pos)
 #rot
 #pos = np.append(pos,[[1],[2],[3]], axis= 1)
@@ -98,83 +101,9 @@ def rotationMatrixToEulerAngles(R) :
 if loadCalibMatrix:
     with np.load(camFileNameLoad) as X:
          mtx, dist, _,_ = [X[i] for i in ('mtx','dist','rvecs','tvecs')]
-# elif makeCal: # laver live calibrering
-    
-#     termination criteria
-#     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-#     prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-#     objp = np.zeros((patternSize[1]*patternSize[0],3), np.float32)
-#     objp[:,:2] = np.mgrid[0:patternSize[0],0:patternSize[1]].T.reshape(-1,2)
-#     objp *= calibrationSquareDimension
 
-#     Arrays to store object points and image points from all the images.
-#     objpoints = [] # 3d point in real world space
-#     imgpoints = [] # 2d points in image plane.
 
-#     print('Detecting checkerboard')
-#     cap = cv2.VideoCapture(0) # 0 for intern webcam
-
-#     cv2.namedWindow('Pose Estimation',cv2.WINDOW_NORMAL)
-#     cv2.namedWindow('Calibration', cv2.WINDOW_NORMAL)
-#     while (cap.isOpened()):
-#         ret1, img = cap.read()
-#         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-#         cv2.imshow('Calibration', gray)
-#         if cv2.waitKey(1) & 0xff == ord(' '):
-#             Find the chess board corners
-#             ret, corners = cv2.findChessboardCorners(gray, patternSize)
-#             If found, add object points, image points (after refining them)
-#             if ret == True:
-#                 objpoints.append(objp)
-
-#                 corners2 = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
-#                 imgpoints.append(corners2)
-
-#                 Draw and display the corners
-#                 img = cv2.drawChessboardCorners(img, patternSize, corners2, ret)
-#                 snap += 1
-#                 cv2.imshow('Calibration', img)
-#                 cv2.waitKey(500)
-#         if snap >= maxSnap:
-#             cv2.waitKey(1000)
-#             cap.release()
-#             ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-#             ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
-#             if saveCamMat: 
-#                 np.savez(camFileNameSave,mtx=mtx,dist=dist,rvecs=rvecs,tvecs=tvecs)
-#                 print('calibration matrix saved')
-#             h,  w = img.shape[:2]
-#             newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h) ,1 , (w,h))
-#             break
-#         if cv2.waitKey(45) & 0xff == ord('q'):
-#             cap.release()
-#             cv2.destroyAllWindows()
-#             break
-#else:
-    
-    
-    
-    # for picam
-    #foL = 0.00304
-    # 1080p opløsning på video
-    #x = 960
-    #y = 540
-    #fov 
-    #fov_x = 62.2 # grader
-    #fov_y = 48.8 # grader
-
-    #f_x = x / np.tan(fov_x / 2)
-    #f_y = y / np.tan(fov_y / 2)
-    # camMat and dist
-    #mtx = np.array([[f_x,0,x],[0,f_y,y],[0,0,1]])
-    #dist = np.array([0.0,0,0,0,0])
-     
-
-    
-#calibrationSquareDimension = 0.13864/6  #meter, pattern i fuld skaerm på 15''
-#calibrationSquareDimension = 0.0685/5 # lille pattern på iphone
-#patternSize = tuple((4,3)) #grid af indre hjoerner af checkerboard
     
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 objp = np.zeros((patternSize[1]*patternSize[0],3), np.float32)
@@ -198,11 +127,21 @@ while(cap.isOpened()):
         ret2 ,rvecs, tvecs, inliers,= cv2.solvePnPRansac(objp, corners2, mtx, dist)
         #print(rvecs)
         #print(tvecs)
+        cv2.Rodrigues(rvecs,rotM)
+        isRotationMatrix(rotM)
+        eulerAng = np.array([rotationMatrixToEulerAngles(rotM)])
+        eulerAng = eulerAng*(180/math.pi)
+        print(eulerAng)
+
+     
+
         pos = np.append(pos,tvecs, axis= 1)
         rot = np.append(rot,rvecs, axis= 1)
         # project 3D points to image plane
         imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
         img = draw(img,corners2,imgpts)
+
+        
         
     
     
@@ -224,13 +163,13 @@ for i in range(pos.shape[0]):
 for i in range(rot.shape[1]):
     cv2.Rodrigues(rot[:,i],rotM)
     isRotationMatrix(rotM)
-    eulerAng = rotationMatrixToEulerAngles(rotM)
-    eulerAng2 = np.array([eulerAng])
-    eulerAng2 = np.transpose(eulerAng2)
-    print(eulerAng2)
-    pyr = np.append(pyr, eulerAng2, axis= 1)
+    eulerAng = np.array([rotationMatrixToEulerAngles(rotM)])
+    # eulerAng2 = np.array([eulerAng])
+    # eulerAng2 = np.transpose(eulerAng2)
+    #print(eulerAng2)
+    pyr = np.concatenate((pyr, eulerAng), axis= 0)
 
-print('pyr' , pyr[0])
+#print('pyr' , pyr[0])
 
 
 print("standard dev of tvecs" ,stdP)
