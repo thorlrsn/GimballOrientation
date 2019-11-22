@@ -1,5 +1,7 @@
 ### READ ME ###
-
+--
+Circle grid detection implemented
+--
 .TXT file structure:
 
 --Standard deviation of Pitch-Yaw-Roll (PYR)
