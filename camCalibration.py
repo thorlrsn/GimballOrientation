@@ -5,8 +5,8 @@ from os.path import isfile, join
 
 
 
-camFileNameSave = 'camMat03'
-maxSnap = 30
+camFileNameSave = 'camMat04'
+maxSnap = 200
 
 calibrationSquareDimension = 0.1330/5 # testgrid
 patternSize = tuple((4,3)) #grid af indre hjoerner af checkerboard
