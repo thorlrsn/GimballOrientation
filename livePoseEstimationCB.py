@@ -26,6 +26,7 @@ dataTXT = 'test1.txt'
 snap = 0
 maxSnap = 30
 
+# til dataopsamling
 pos = np.array([[], [], []], dtype=np.float64) # til at opsamle tvecs vektor
 rot = np.array([[], [], []], dtype=np.float64) # til at opsamle rvecs vektor
 unitVec = np.empty((3,0),dtype=np.float64)
@@ -43,10 +44,10 @@ stdPyr = np.array([[0],[0],[0]], dtype=np.float64)
 rotM = np.zeros((3,3))
 
 
-#print(std[1])
+#print(std[1])  
 #print(mean)
 
-calibrationSquareDimension = 0.134/3 # mellemstort pattern i lab
+calibrationSquareDimension = 0.13342/5 # test grid printet.
 patternSize = tuple((4,3)) #grid af indre hjoerner af checkerboard
 
 #calibrationSquareDimension = 0.0685/5 # lille pattern på iphone
@@ -75,7 +76,7 @@ def isRotationMatrix(R) :
 # Calculates rotation matrix to euler angles
 # The result is the same as MATLAB except the order
 # of the euler angles ( x and z are swapped ).
-def rotationMatrixToEulerAngles(R) :
+def rotationMatrixToEulerAngles(R):
  
     assert(isRotationMatrix(R))
      
@@ -106,11 +107,9 @@ criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 objp = np.zeros((patternSize[1]*patternSize[0],3), np.float32)
 objp[:,:2] = np.mgrid[0:patternSize[0],0:patternSize[1]].T.reshape(-1,2)
 objp *= calibrationSquareDimension
-
 axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)*calibrationSquareDimension
 
 cap = cv2.VideoCapture(0) # 0 for intern webcam
-
 cv2.namedWindow('Pose Estimation',cv2.WINDOW_NORMAL)
 
 while(cap.isOpened()):
@@ -128,7 +127,7 @@ while(cap.isOpened()):
         cv2.Rodrigues(rvecs,rotM)
         #isRotationMatrix(rotM)
         eulerAng = np.array([rotationMatrixToEulerAngles(rotM)])
-        print(eulerAng)
+        print(eulerAng*180/math.pi)
         uV = np.array([[math.sin(eulerAng[0,2]*math.cos(math.pi/2-eulerAng[0,1]))], [math.sin(eulerAng[0,2]*math.sin(math.pi/2-eulerAng[0,1]))],[math.cos(eulerAng[0,2])]])
 
         unitVec = np.concatenate((unitVec, uV) , axis=1)
@@ -145,7 +144,7 @@ while(cap.isOpened()):
     
     cv2.imshow('Pose Estimation',img)
         
-    if cv2.waitKey(45) & 0xff == ord('q'):
+    if cv2.waitKey(1) & 0xff == ord('q'):
         cap.release()
         cv2.destroyAllWindows()
         break
@@ -184,23 +183,23 @@ np.savetxt(dataTXT,("stdPYR",stdPyr,"stdR",stdR.T,"stdP",stdP.T,"meanPYR",meanPy
 
 fig = plt.figure()
 
-ax = fig.add_subplot(1,2,1, projection='3d')
-ax.plot(pos[0], pos[1], pos[2], label='positon')
-ax.set_xlim(-0.5, 0.5)
-ax.set_ylim(-0.5, 0.5)
-ax.set_zlim(0, 2)
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
+ax1 = fig.add_subplot(1,2,1, projection='3d')
+ax1.plot(pos[0], pos[1], pos[2], label='positon')
+ax1.set_xlim(-0.5, 0.5)
+ax1.set_ylim(-0.5, 0.5)
+ax1.set_zlim(0, 2)
+ax1.set_xlabel('X')
+ax1.set_ylabel('Y')
+ax1.set_zlabel('Z')
 
-ax = fig.add_subplot(1,2,2, projection='3d')
-ax.quiver(0,0,0,unitVec[0],unitVec[1],unitVec[2],label = 'rotation')
-ax.legend()
-ax.set_xlim(-1.1, 1.1)
-ax.set_ylim(-1.1, 1.1)
-ax.set_zlim(-1.1, 1.1)
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
+ax2 = fig.add_subplot(1,2,2, projection='3d')
+ax2.quiver(0,0,0,unitVec[0],unitVec[1],unitVec[2],label = 'rotation')
+ax2.legend()
+ax2.set_xlim(-1.1, 1.1)
+ax2.set_ylim(-1.1, 1.1)
+ax2.set_zlim(-1.1, 1.1)
+ax2.set_xlabel('X')
+ax2.set_ylabel('Y')
+ax2.set_zlabel('Z')
 
 plt.show()

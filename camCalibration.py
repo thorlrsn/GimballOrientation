@@ -5,13 +5,18 @@ from os.path import isfile, join
 
 
 
-camFileNameSave = 'camMatCircle03'
-maxSnap = 50
+camFileNameSave = 'camMatCircle03' #filnavn på calibrering.
+maxSnap = 50 # antal billeder der bruges i calibreringen. Jo fler jo bedre, men kan tage lang tid at processere.
 pattern = "AsCircle Grid" # 'Checkerboard' eller 'AsCircle Grid'.
 # CB: afstand mellem intersect på checkerboard ELLER CG: horz/vert afstand mellem centrum af circler, ikke skrå/diagonal afstand.
+
+# de følgende værdier skal tilpasses det grid der bruges til calibrering. Samme værdier skal bruges til tracking.
 calibrationDimension = 0.100/3 # circleGrid fra http://opencv.willowgarage.com/ printet til a4 .
+#calibrationDimension = 0.13342/5 # checkerboard test grid printet.
+#calibrationDimension = 0.100/3 
 patternSize = tuple((4,11)) #grid af indre hjoerner af checkerboard, eller antal rækker og "søjler" på circle grid.
 
+# danner det "digitale" grid der søges efter.
 def objPoints (grid, cDimension, pSize):
     if grid == "Checkerboard":
         #prepare CB object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
@@ -23,10 +28,12 @@ def objPoints (grid, cDimension, pSize):
         op = []
         for i in range(pSize[1]):
             for j in range(pSize[0]):
-                op.append(( (2*j + i%2)*cDimension/2,i*cDimension/2, 0) )
+                op.append(( (2*j + i%2)*cDimension/2,i*cDimension/2, 0))
         op= np.array(op).astype('float32')
     return op
       
+
+
 objp = objPoints(pattern,calibrationDimension,patternSize)
 
 # termination criteria
@@ -37,7 +44,7 @@ objpoints = [] # 3d point in real world space
 imgpoints = [] # 2d points in image plane.
 
 print("Detecting", pattern)
-cap = cv2.VideoCapture(0) # 0 for intern webcam
+cap = cv2.VideoCapture(0) # 0 for internt webcam
 snap = 0
 #cv2.namedWindow('Pose Estimation',cv2.WINDOW_NORMAL)
 cv2.namedWindow("Calibration", cv2.WINDOW_NORMAL)
@@ -49,11 +56,12 @@ while (cap.isOpened()):
         # Find the chess board corners
         if pattern == "Checkerboard":
             ret, corners = cv2.findChessboardCorners(gray, patternSize)
-            # If found, add object points, image points (after refining them)
+            
         if pattern == "AsCircle Grid":
             ret, corners  = cv2.findCirclesGrid(gray, patternSize, flags = cv2.CALIB_CB_ASYMMETRIC_GRID)
 
         if ret:
+            # If found, add object points, image points (after refining them)
             objpoints.append(objp)
             corners2 = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
             imgpoints.append(corners2)
@@ -67,6 +75,7 @@ while (cap.isOpened()):
     if snap >= maxSnap: # gemmer calibrering når maxsnaps er opnået
         cv2.waitKey(1000)
         cap.release()
+        cv2.destroyAllWindows()
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
         np.savez(camFileNameSave,mtx=mtx,dist=dist,rvecs=rvecs,tvecs=tvecs)
         h,  w = img.shape[:2]
@@ -82,7 +91,7 @@ while (cap.isOpened()):
 
 # printer "calibreringsfejl"
 tot_error = 0
-
+# beregner fejl af kalibrering.
 for i in range(len(objpoints)):
     imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
     tot_error += cv2.norm(imgpoints[i],imgpoints2, cv2.NORM_L2)/len(imgpoints2)

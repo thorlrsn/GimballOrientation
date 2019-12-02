@@ -135,7 +135,7 @@ def animate(i):
 camFileNameLoad = 'camMatCircle03.npz'
 pattern = "AsCircle Grid" # 'Checkerboard' eller 'AsCircle Grid'.
 # CB: afstand mellem intersect på checkerboard ELLER CG: horz/vert afstand mellem centrum af circler, ikke skrå/diagonal afstand.
-calibrationDimension = 0.100/3 # circleGrid fra http://opencv.willowgarage.com/ printet til a4 .
+calibrationDimension = 0.02546 # circleGrid fra http://opencv.willowgarage.com/ printet til a4 .
 patternSize = tuple((4,11)) #grid a
 # laver objp ud fra grid type.
 objp = objPoints(pattern,calibrationDimension,patternSize)
